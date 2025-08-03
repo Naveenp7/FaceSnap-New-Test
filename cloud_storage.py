@@ -5,13 +5,12 @@ import cloudinary.api
 from urllib.parse import urlparse
 
 # Configure Cloudinary
-cloudinary.config( 
-    cloud_name = "dwqajqcnq", 
-    api_key = "343324552376533", 
-    api_secret = "Zsfm4DL6-VX4siB4xCNvi-XiTZw", # Click 'View API Keys' above to copy your API secret
-    secure=True
+cloudinary.config(
+    cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME', 'dwqajqcnq'),
+    api_key = os.getenv('CLOUDINARY_API_KEY', '343324552376533'),
+    api_secret = os.getenv('CLOUDINARY_API_SECRET', 'Zsfm4DL6-VX4siB4xCNvi-XiTZw'),
+    secure = True
 )
-
 
 def upload_file(file_path, folder="uploads"):
     """Upload a file to Cloudinary"""

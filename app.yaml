@@ -1,0 +1,13 @@
+runtime: python311
+entrypoint: gunicorn -b :$PORT app:app
+instance_class: F2
+
+automatic_scaling:
+  max_instances: 1
+
+env_variables:
+  # Add your environment variables here, e.g.:
+  DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/postgres"
+  CLOUDINARY_CLOUD_NAME: "dwqajqcnq"
+  CLOUDINARY_API_KEY: "343324552376533"
+  CLOUDINARY_API_SECRET: "Zsfm4DL6-VX4siB4xCNvi-XiTZw"
