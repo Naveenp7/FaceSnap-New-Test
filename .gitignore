@@ -37,7 +37,7 @@ instance/
 *.code-workspace
 
 # Project specific
-static/uploads/
+
 static/selfies/
 static/qrcodes/
 static/faces/
