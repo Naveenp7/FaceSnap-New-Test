@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Photos - {{ event.name }} - FaceSnap Gallery{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1>Upload Photos</h1>
+        <p class="text-muted">Event: {{ event.name }}</p>
+    </div>
+    <a href="{{ url_for('event_detail', event_id=event.id) }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Back to Event
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Upload New Photos</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('upload_images', event_id=event.id) }}" enctype="multipart/form-data" id="uploadForm">
+                    <div class="mb-3">
+                        <label for="photos" class="form-label">Select Photos</label>
+                        <input class="form-control" type="file" id="photos" name="photos" multiple accept="image/*" required>
+                        <div class="form-text">
+                            Select multiple photos to upload. Supported formats: JPG, PNG, JPEG.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3" id="previewContainer" style="display: none;">
+                        <label class="form-label">Preview</label>
+                        <div class="row row-cols-2 row-cols-md-4 g-3" id="imagePreview"></div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary" id="uploadButton">
+                            <i class="fas fa-upload me-2"></i>Upload and Process Photos
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="progress mt-3" id="uploadProgress" style="display: none;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Note:</strong> After upload, our system will automatically detect faces and group them into clusters.
+                    This process may take a few moments depending on the number of photos.
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Processing Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h6><i class="fas fa-cogs me-2"></i>What happens after upload?</h6>
+                    <ol class="small">
+                        <li>Photos are saved to the server</li>
+                        <li>Face detection identifies all faces in each photo</li>
+                        <li>Face recognition extracts unique features from each face</li>
+                        <li>Similar faces are grouped into clusters</li>
+                        <li>Photos are linked to their respective face clusters</li>
+                    </ol>
+                </div>
+                
+                <div class="mb-4">
+                    <h6><i class="fas fa-lightbulb me-2"></i>Tips for best results</h6>
+                    <ul class="small">
+                        <li>Upload clear, well-lit photos</li>
+                        <li>Front-facing portraits work best</li>
+                        <li>Group photos are fine - our system can detect multiple faces</li>
+                        <li>Higher resolution photos yield better face detection</li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-warning small">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Important:</strong> Processing large batches of photos may take several minutes. Please don't close this page until processing is complete.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const photoInput = document.getElementById('photos');
+        const previewContainer = document.getElementById('previewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const uploadForm = document.getElementById('uploadForm');
+        const uploadButton = document.getElementById('uploadButton');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const progressBar = uploadProgress.querySelector('.progress-bar');
+        
+        // Preview selected images
+        photoInput.addEventListener('change', function() {
+            imagePreview.innerHTML = '';
+            
+            if (this.files.length > 0) {
+                previewContainer.style.display = 'block';
+                
+                for (let i = 0; i < Math.min(this.files.length, 8); i++) {
+                    const file = this.files[i];
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        const col = document.createElement('div');
+                        col.className = 'col';
+                        
+                        const card = document.createElement('div');
+                        card.className = 'card h-100';
+                        
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'card-img-top';
+                        img.alt = 'Preview';
+                        
+                        const cardBody = document.createElement('div');
+                        cardBody.className = 'card-body p-2';
+                        
+                        const fileName = document.createElement('p');
+                        fileName.className = 'card-text small text-truncate mb-0';
+                        fileName.textContent = file.name;
+                        
+                        cardBody.appendChild(fileName);
+                        card.appendChild(img);
+                        card.appendChild(cardBody);
+                        col.appendChild(card);
+                        imagePreview.appendChild(col);
+                    };
+                    
+                    reader.readAsDataURL(file);
+                }
+                
+                if (this.files.length > 8) {
+                    const col = document.createElement('div');
+                    col.className = 'col';
+                    
+                    const card = document.createElement('div');
+                    card.className = 'card h-100 d-flex justify-content-center align-items-center';
+                    
+                    const cardBody = document.createElement('div');
+                    cardBody.className = 'card-body text-center';
+                    
+                    const moreText = document.createElement('p');
+                    moreText.className = 'mb-0 fw-bold';
+                    moreText.textContent = `+${this.files.length - 8} more`;
+                    
+                    cardBody.appendChild(moreText);
+                    card.appendChild(cardBody);
+                    col.appendChild(card);
+                    imagePreview.appendChild(col);
+                }
+            } else {
+                previewContainer.style.display = 'none';
+            }
+        });
+        
+        // Handle form submission
+        uploadForm.addEventListener('submit', function(e) {
+            if (photoInput.files.length === 0) {
+                return;
+            }
+            
+            uploadButton.disabled = true;
+            uploadButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
+            uploadProgress.style.display = 'block';
+            
+            // Simulate progress (in a real app, you'd use AJAX with progress events)
+            let progress = 0;
+            const interval = setInterval(function() {
+                progress += Math.random() * 10;
+                if (progress > 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                }
+                progressBar.style.width = progress + '%';
+                progressBar.setAttribute('aria-valuenow', progress);
+            }, 500);
+        });
+    });
+</script>
+{% endblock %}

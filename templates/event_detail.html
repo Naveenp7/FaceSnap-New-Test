@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ event.name }} - FaceSnap Gallery{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1>{{ event.name }}</h1>
+        <p class="text-muted">
+            <i class="fas fa-calendar-alt me-2"></i>{{ event.date }}
+            <i class="fas fa-map-marker-alt ms-3 me-2"></i>{{ event.location }}
+        </p>
+    </div>
+    <div>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary me-2">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+        <a href="{{ url_for('upload_images', event_id=event.id) }}" class="btn btn-primary">
+            <i class="fas fa-upload me-2"></i>Upload Photos
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Event Photos</h5>
+                <span class="badge bg-primary">{{ images|length }} Photos</span>
+            </div>
+            <div class="card-body">
+                {% if images %}
+                <div class="row row-cols-1 row-cols-md-3 g-3">
+                    {% for image in images %}
+                    <div class="col">
+                        <div class="card h-100">
+                            <img src="{{ url_for('static', filename=image.file_path) }}" class="card-img-top" alt="Event photo">
+                            <div class="card-body p-2">
+                                <p class="card-text small text-muted mb-0">
+                                    <i class="fas fa-users me-1"></i>{{ image.face_count|default(0) }} faces
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-images fa-4x text-muted mb-3"></i>
+                    <h4>No Photos Yet</h4>
+                    <p class="text-muted">Upload photos to start face detection and grouping.</p>
+                    <a href="{{ url_for('upload_images', event_id=event.id) }}" class="btn btn-primary mt-2">
+                        <i class="fas fa-upload me-2"></i>Upload Photos
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-2">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Face Clusters</h5>
+                <span class="badge bg-info">{{ clusters|length }} Clusters</span>
+            </div>
+            <div class="card-body p-0">
+                {% if clusters %}
+                <ul class="list-group list-group-flush">
+                    {% for cluster in clusters %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="fw-bold">Cluster #{{ cluster.id }}</span>
+                            {% if cluster.user_name %}
+                            <span class="badge bg-success ms-2">{{ cluster.user_name }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary ms-2">Unidentified</span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <span class="badge bg-primary rounded-pill">{{ cluster.image_count }} photos</span>
+                            <a href="{{ url_for('cluster_detail', event_id=event.id, cluster_id=cluster.id) }}" class="btn btn-sm btn-outline-primary ms-2">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No face clusters detected yet.</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-white">
+                <a href="{{ url_for('view_clusters', event_id=event.id) }}" class="btn btn-sm btn-outline-primary w-100">
+                    <i class="fas fa-users me-2"></i>View All Clusters
+                </a>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Event QR Code</h5>
+            </div>
+            <div class="card-body text-center">
+                <img src="{{ url_for('static', filename='qrcodes/event_' + event.id|string + '.png') }}" 
+                     alt="Event QR Code" class="img-fluid mb-3" style="max-width: 200px;">
+                <p class="mb-2">Scan this QR code or share the link below:</p>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" value="{{ verify_url }}" id="verifyUrl" readonly>
+                    <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('verifyUrl')">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                <p class="small text-muted">Guests can scan this QR code to verify their identity and access their photos.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function copyToClipboard(elementId) {
+        const element = document.getElementById(elementId);
+        element.select();
+        document.execCommand('copy');
+        
+        // Show a temporary tooltip
+        const button = element.nextElementSibling;
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        setTimeout(() => {
+            button.innerHTML = originalHTML;
+        }, 2000);
+    }
+</script>
+{% endblock %}

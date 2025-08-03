@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Your Gallery - {{ event.name }} - FaceSnap Gallery{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1>Your Personal Gallery</h1>
+        <p class="text-muted">Event: {{ event.name }} - {{ event.date }} at {{ event.location }}</p>
+    </div>
+    <div>
+        <button onclick="downloadAllImages('{{ url_for('download_all', event_id=event.id, cluster_id=cluster.id) }}')" class="btn btn-success download-all-btn">
+            <i class="fas fa-download me-2"></i>Download All Photos
+        </button>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <div class="me-3">
+                <img src="{{ url_for('static', filename='selfies/' + user.selfie_path) }}" 
+                     class="rounded-circle" alt="Your selfie" width="50" height="50">
+            </div>
+            <div>
+                <h5 class="mb-0">{{ user.name }}</h5>
+                <p class="text-muted small mb-0">Verified User</p>
+            </div>
+        </div>
+        <span class="badge bg-primary">{{ images|length }} Photos</span>
+    </div>
+    <div class="card-body">
+        {% if images %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for image in images %}
+            <div class="col">
+                <div class="card h-100">
+                    <a href="{{ url_for('static', filename=image.file_path) }}" data-lightbox="gallery" data-title="Photo #{{ image.id }}">
+                        <img src="{{ url_for('static', filename=image.file_path) }}" class="card-img-top" alt="Gallery photo">
+                    </a>
+                    <div class="card-body">
+                        <h6 class="card-title">Photo #{{ image.id }}</h6>
+                        <p class="card-text small text-muted">From {{ event.name }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ url_for('download_image', image_id=image.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-download me-2"></i>Download
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-secondary share-btn" 
+                                    data-share-url="{{ url_for('download_image', image_id=image.id, _external=True) }}">
+                                <i class="fas fa-share-alt me-2"></i>Share
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-images fa-4x text-muted mb-3"></i>
+            <h4>No Photos Found</h4>
+            <p class="text-muted">We couldn't find any photos of you in this event.</p>
+            <a href="{{ url_for('verify_user', event_id=event.id) }}" class="btn btn-primary mt-2">
+                <i class="fas fa-redo me-2"></i>Try Again
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    <div class="card-footer bg-light p-3">
+        <div class="small text-muted">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Note:</strong> These photos are available for a limited time. Please download any photos you'd like to keep.
+        </div>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="shareModalLabel">Share Photo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Share this photo with friends and family:</p>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="shareUrl" readonly>
+                    <button class="btn btn-outline-secondary" type="button" id="copyShareUrlBtn">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                <div class="d-flex justify-content-center gap-3 mt-4">
+                    <button type="button" class="btn btn-outline-primary" data-share-type="email">
+                        <i class="fas fa-envelope fa-lg"></i>
+                        <div class="small mt-1">Email</div>
+                    </button>
+                    <button type="button" class="btn btn-outline-success" data-share-type="whatsapp">
+                        <i class="fab fa-whatsapp fa-lg"></i>
+                        <div class="small mt-1">WhatsApp</div>
+                    </button>
+                    <button type="button" class="btn btn-outline-info" data-share-type="facebook">
+                        <i class="fab fa-facebook fa-lg"></i>
+                        <div class="small mt-1">Facebook</div>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" data-share-type="pinterest">
+                        <i class="fab fa-pinterest fa-lg"></i>
+                        <div class="small mt-1">Pinterest</div>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css">
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
+<script src="{{ url_for('static', filename='js/gallery.js') }}"></script>
+{% endblock %}

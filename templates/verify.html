@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+
+{% block title %}Verify Your Identity - FaceSnap Gallery{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white text-center py-3">
+                <h4 class="mb-0"><i class="fas fa-user-check me-2"></i>Verify Your Identity</h4>
+            </div>
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <h5>Event: {{ event.name }}</h5>
+                    <p class="text-muted">{{ event.date }} at {{ event.location }}</p>
+                    
+                    {% if cluster_id %}
+                    <div class="row row-cols-3 g-2 mb-3 justify-content-center">
+                        {% for face in sample_faces[:6] %}
+                        <div class="col" style="max-width: 100px;">
+                            <img src="{{ face.path }}" class="img-thumbnail" alt="Face sample">
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <p class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        We've already identified you in some photos. Please verify your identity to access them.
+                    </p>
+                    {% else %}
+                    <p class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Take a selfie to find your photos from this event.
+                    </p>
+                    {% endif %}
+                </div>
+                
+                <form method="post" action="{{ url_for('verify_user', event_id=event.id) }}" enctype="multipart/form-data" id="verificationForm">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Your Full Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email">
+                        <div class="form-text">We'll use this to send you a link to your photos.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone Number (optional)</label>
+                        <input type="tel" class="form-control" id="phone" name="phone">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Take a Selfie</label>
+                        <div class="d-flex justify-content-center mb-3">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-primary" id="cameraBtn">
+                                    <i class="fas fa-camera me-2"></i>Use Camera
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="uploadBtn">
+                                    <i class="fas fa-upload me-2"></i>Upload Photo
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Camera capture -->
+                        <div id="cameraContainer" class="text-center mb-3" style="display: none;">
+                            <video id="video" width="100%" height="auto" style="background-color: #ddd; max-height: 300px;" autoplay></video>
+                            <canvas id="canvas" style="display: none;"></canvas>
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-primary" id="captureBtn">
+                                    <i class="fas fa-camera me-2"></i>Take Photo
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- File upload -->
+                        <div id="uploadContainer" class="mb-3" style="display: none;">
+                            <input class="form-control" type="file" id="selfieUpload" name="selfie" accept="image/*">
+                        </div>
+                        
+                        <!-- Preview -->
+                        <div id="previewContainer" class="text-center mb-3" style="display: none;">
+                            <div class="position-relative d-inline-block">
+                                <img id="preview" src="#" alt="Selfie preview" class="img-thumbnail" style="max-height: 200px;">
+                                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" id="resetBtn">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <input type="hidden" id="selfieData" name="selfie_data">
+                        </div>
+                        
+                        <div class="alert alert-warning small">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Important:</strong> Please ensure your face is clearly visible and well-lit for the best matching results.
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                            <i class="fas fa-check-circle me-2"></i>Verify and Find My Photos
+                        </button>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Home
+                        </a>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer bg-light p-3">
+                <div class="small text-muted">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    <strong>Privacy Notice:</strong> Your selfie will only be used to match you with photos from this event and will be stored locally. Your data will not be shared with third parties.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const cameraBtn = document.getElementById('cameraBtn');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const cameraContainer = document.getElementById('cameraContainer');
+        const uploadContainer = document.getElementById('uploadContainer');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureBtn = document.getElementById('captureBtn');
+        const selfieUpload = document.getElementById('selfieUpload');
+        const preview = document.getElementById('preview');
+        const previewContainer = document.getElementById('previewContainer');
+        const resetBtn = document.getElementById('resetBtn');
+        const selfieData = document.getElementById('selfieData');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        let stream = null;
+        
+        // Use camera button
+        cameraBtn.addEventListener('click', async function() {
+            try {
+                cameraBtn.classList.add('active');
+                uploadBtn.classList.remove('active');
+                cameraContainer.style.display = 'block';
+                uploadContainer.style.display = 'none';
+                
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                alert('Could not access camera. Please ensure you have granted camera permissions or try uploading a photo instead.');
+                cameraContainer.style.display = 'none';
+            }
+        });
+        
+        // Upload button
+        uploadBtn.addEventListener('click', function() {
+            uploadBtn.classList.add('active');
+            cameraBtn.classList.remove('active');
+            uploadContainer.style.display = 'block';
+            cameraContainer.style.display = 'none';
+            
+            // Stop camera if it's running
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+        });
+        
+        // Capture photo from camera
+        captureBtn.addEventListener('click', function() {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = canvas.toDataURL('image/jpeg');
+            preview.src = imageData;
+            selfieData.value = imageData;
+            previewContainer.style.display = 'block';
+            submitBtn.disabled = false;
+            
+            // Stop camera
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            cameraContainer.style.display = 'none';
+        });
+        
+        // Handle file upload
+        selfieUpload.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    previewContainer.style.display = 'block';
+                    submitBtn.disabled = false;
+                };
+                
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+        
+        // Reset button
+        resetBtn.addEventListener('click', function() {
+            previewContainer.style.display = 'none';
+            selfieData.value = '';
+            selfieUpload.value = '';
+            submitBtn.disabled = true;
+        });
+        
+        // Form validation
+        const form = document.getElementById('verificationForm');
+        form.addEventListener('submit', function(e) {
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const hasSelfie = selfieData.value || selfieUpload.files.length > 0;
+            
+            if (!name || !hasSelfie) {
+                e.preventDefault();
+                alert('Please provide your name and a selfie to continue.');
+            }
+        });
+    });
+</script>
+{% endblock %}

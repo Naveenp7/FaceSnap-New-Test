@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}Face Clusters - {{ event.name }} - FaceSnap Gallery{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1>Face Clusters</h1>
+        <p class="text-muted">Event: {{ event.name }}</p>
+    </div>
+    <a href="{{ url_for('event_detail', event_id=event.id) }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Back to Event
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Detected Face Clusters</h5>
+                <span class="badge bg-primary">{{ clusters|length }} Clusters</span>
+            </div>
+            <div class="card-body">
+                {% if clusters %}
+                <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
+                    {% for cluster in clusters %}
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">Cluster #{{ cluster.id }}</h6>
+                                    <span class="badge bg-info">{{ cluster.image_count }} photos</span>
+                                </div>
+                                {% if cluster.user_name %}
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-user-check me-1"></i>{{ cluster.user_name }}
+                                    </span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% if cluster.sample_faces %}
+                            <div class="card-img-top p-2">
+                                <div class="row row-cols-2 row-cols-sm-3 g-2">
+                                    {% for face in cluster.sample_faces[:6] %}
+                                    <div class="col">
+                                        <img src="{{ face.path }}" class="img-thumbnail" alt="Face sample">
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            <div class="card-body">
+                                {% if cluster.user_name %}
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="ms-2">
+                                        <h6 class="mb-0">{{ cluster.user_name }}</h6>
+                                        <p class="text-muted small mb-0">Verified User</p>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="alert alert-secondary small mb-3">
+                                    <i class="fas fa-user-question me-2"></i>No user has claimed this cluster yet
+                                </div>
+                                {% endif %}
+                                
+                                <div class="d-grid gap-2">
+                                    <a href="{{ url_for('cluster_detail', event_id=event.id, cluster_id=cluster.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-images me-2"></i>View Photos
+                                    </a>
+                                    {% if not cluster.user %}
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#qrModal{{ cluster.id }}">
+                                        <i class="fas fa-qrcode me-2"></i>Generate QR Code
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- QR Code Modal -->
+                    <div class="modal fade" id="qrModal{{ cluster.id }}" tabindex="-1" aria-labelledby="qrModalLabel{{ cluster.id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="qrModalLabel{{ cluster.id }}">QR Code for Cluster #{{ cluster.id }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body text-center">
+                                    <img src="{{ url_for('static', filename='qrcodes/cluster_' + event.id|string + '_' + cluster.id|string + '.png') }}" 
+                                         alt="Cluster QR Code" class="img-fluid mb-3" style="max-width: 200px;">
+                                    <p class="mb-2">Scan this QR code or share the link below:</p>
+                                    <div class="input-group mb-3">
+                                        <input type="text" class="form-control" value="{{ url_for('verify_user', event_id=event.id, cluster_id=cluster.id, _external=True) }}" id="clusterUrl{{ cluster.id }}" readonly>
+                                        <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('clusterUrl{{ cluster.id }}')">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <a href="{{ url_for('static', filename='qrcodes/cluster_' + event.id|string + '_' + cluster.id|string + '.png') }}" 
+                                       download="cluster_{{ cluster.id }}_qr.png" class="btn btn-primary">
+                                        <i class="fas fa-download me-2"></i>Download QR
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-users fa-4x text-muted mb-3"></i>
+                    <h4>No Face Clusters Found</h4>
+                    <p class="text-muted">Upload photos to start face detection and grouping.</p>
+                    <a href="{{ url_for('upload_images', event_id=event.id) }}" class="btn btn-primary mt-2">
+                        <i class="fas fa-upload me-2"></i>Upload Photos
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function copyToClipboard(elementId) {
+        const element = document.getElementById(elementId);
+        element.select();
+        document.execCommand('copy');
+        
+        // Show a temporary tooltip
+        const button = element.nextElementSibling;
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        setTimeout(() => {
+            button.innerHTML = originalHTML;
+        }, 2000);
+    }
+</script>
+{% endblock %}

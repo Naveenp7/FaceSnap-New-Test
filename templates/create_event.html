@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Event - FaceSnap Gallery{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="my-0">Create New Event</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" action="{{ url_for('create_event') }}">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Event Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required autofocus>
+                        <div class="form-text">Enter a descriptive name for your event (e.g., "Smith Wedding")</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Event Date</label>
+                        <input type="datetime-local" class="form-control" id="date" name="date" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Event Location</label>
+                        <input type="text" class="form-control" id="location" name="location" required>
+                        <div class="form-text">Enter the venue or location where the event took place</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description (Optional)</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        <div class="form-text">Add any additional details about the event</div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Create Event
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Set default date to today
+    document.addEventListener('DOMContentLoaded', function() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        
+        const defaultDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+        document.getElementById('date').value = defaultDateTime;
+    });
+</script>
+{% endblock %}

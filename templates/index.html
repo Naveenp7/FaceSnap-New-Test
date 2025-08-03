@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}FaceSnap Gallery - Home{% endblock %}
+
+{% block content %}
+<div class="row align-items-center py-5">
+    <div class="col-md-6">
+        <h1 class="display-4 fw-bold">Welcome to FaceSnap Gallery</h1>
+        <p class="lead">Automatically organize and share event photos using facial recognition technology.</p>
+        <hr class="my-4">
+        <p>FaceSnap Gallery helps photographers organize event photos by faces and allows guests to easily find their photos.</p>
+        <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+            {% if session.user_id %}
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg px-4 me-md-2">Go to Dashboard</a>
+            {% else %}
+            <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg px-4 me-md-2">Photographer Login</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-6 text-center">
+        <img src="{{ url_for('static', filename='img/hero-image.svg') }}" alt="FaceSnap Gallery" class="img-fluid" style="max-height: 400px;">
+    </div>
+</div>
+
+<div class="row mt-5 pt-5">
+    <div class="col-12 text-center mb-4">
+        <h2 class="display-6">How It Works</h2>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-camera fa-3x mb-3 text-primary"></i>
+                <h3 class="card-title h5">1. Upload Photos</h3>
+                <p class="card-text">Photographers upload event photos to the platform.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-face-smile fa-3x mb-3 text-primary"></i>
+                <h3 class="card-title h5">2. Automatic Face Recognition</h3>
+                <p class="card-text">Our system automatically detects and groups photos by faces.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-qrcode fa-3x mb-3 text-primary"></i>
+                <h3 class="card-title h5">3. Easy Access for Guests</h3>
+                <p class="card-text">Guests scan a QR code, take a selfie, and instantly access their photos.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5 pt-5">
+    <div class="col-12 text-center mb-4">
+        <h2 class="display-6">Features</h2>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+                <i class="fas fa-bolt text-primary fa-2x me-3"></i>
+            </div>
+            <div>
+                <h4 class="h5">Fast Processing</h4>
+                <p class="text-muted">Quick face detection and grouping</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+                <i class="fas fa-lock text-primary fa-2x me-3"></i>
+            </div>
+            <div>
+                <h4 class="h5">Secure Access</h4>
+                <p class="text-muted">Face verification for gallery access</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+                <i class="fas fa-download text-primary fa-2x me-3"></i>
+            </div>
+            <div>
+                <h4 class="h5">Easy Downloads</h4>
+                <p class="text-muted">High-resolution photo downloads</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+                <i class="fas fa-server text-primary fa-2x me-3"></i>
+            </div>
+            <div>
+                <h4 class="h5">Local Storage</h4>
+                <p class="text-muted">All data stored locally for privacy</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
